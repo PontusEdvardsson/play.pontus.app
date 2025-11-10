@@ -26,20 +26,52 @@
   </div>
   <div class="note">Ticks down 1% per second. Updates are laggy and sometimes lie.</div>
   
-  <!-- Using a remote audio URL; replace AUDIO_URL with your own link -->
-  <audio id="bg" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop preload="auto"></audio>
+  <!-- Official YouTube embed for Rick Astley - Never Gonna Give You Up -->
+  <div id="yt-container" style="margin-top:16px;">
+    <div id="ytplayer"></div>
+  </div>
+  <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
     (function () {
-      const audio = document.getElementById('bg');
       const slider = document.getElementById('vol');
       const tip = document.getElementById('tooltip');
       const start = document.getElementById('start');
+      let player = null;
+      let playerReady = false;
+      let currentVolume = 0.5; // 0..1, used for dead zone memory
+
+      // YouTube IFrame API bootstraps this global callback
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player('ytplayer', {
+          height: '202',
+          width: '360',
+          videoId: 'dQw4w9WgXcQ',
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            rel: 0,
+            modestbranding: 1,
+            loop: 1,
+            // loop requires playlist to be the same video id
+            playlist: 'dQw4w9WgXcQ'
+          },
+          events: {
+            onReady: () => {
+              playerReady = true;
+              // Initialize player volume from the slider using our mapping
+              const initV = shittyMap(Number(slider.value));
+              currentVolume = initV;
+              player.setVolume(Math.round(initV * 100));
+            }
+          }
+        });
+      };
 
       function shittyMap(val) {
         const x = val / 100;        // 0..1
         let v = x;                  // normal direction: 0% left -> 100% right
-        if (x > 0.35 && x < 0.65) v = audio.volume;  // dead zone
+        if (x > 0.35 && x < 0.65) v = currentVolume;  // dead zone holds previous actual volume
         v = Math.pow(v, 0.35);      // nonlinear (too loud early)
         if (Math.random() < 0.15) v = v < 0.5 ? 1 : 0; // random snap
         return Math.max(0, Math.min(1, v));
@@ -56,7 +88,11 @@
         updateFakeTooltip(val);
         clearTimeout(pending);
         pending = setTimeout(() => {
-          audio.volume = shittyMap(val);
+          const v = shittyMap(val);
+          currentVolume = v;
+          if (playerReady) {
+            player.setVolume(Math.round(v * 100));
+          }
         }, 250 + Math.random() * 400); // laggy update
       });
 
@@ -85,7 +121,11 @@
           updateFakeTooltip(v);
           clearTimeout(pending);
           pending = setTimeout(() => {
-            audio.volume = shittyMap(v);
+            const vv = shittyMap(v);
+            currentVolume = vv;
+            if (playerReady) {
+              player.setVolume(Math.round(vv * 100));
+            }
           }, 250 + Math.random() * 400);
         }, 1000);
       }
@@ -94,13 +134,20 @@
       start.addEventListener('click', async () => {
         start.disabled = true;
         start.textContent = 'Starting...';
-        try {
-          audio.volume = shittyMap(Number(slider.value));
-          await audio.play();
-        } catch {
-          audio.play().catch(() => {});
+        const boot = () => {
+          if (playerReady) {
+            // Ensure volume reflects current slider via mapping
+            const v = shittyMap(Number(slider.value));
+            currentVolume = v;
+            player.setVolume(Math.round(v * 100));
+            player.playVideo();
+            return true;
+          }
+          return false;
+        };
+        if (!boot()) {
+          const tm = setInterval(() => { if (boot()) clearInterval(tm); }, 100);
         }
-        audio.muted = false;
         start.remove();
         startTickDown();
       });
