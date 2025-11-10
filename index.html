@@ -5,45 +5,40 @@
   <title>Shitty Volume Slider</title>
   <style>
     body { font-family: system-ui, sans-serif; padding: 32px; }
-    .row { display: flex; align-items: center; gap: 12px; }
-    input[type="range"] { width: 320px; transform: scaleX(-1) rotate(1deg); }
+    .row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    input[type="range"] { width: 360px; }
     .tooltip { width: 48px; text-align: right; }
-    .note { font-size: 12px; opacity: 0.7; }
+    .note { font-size: 12px; opacity: 0.7; margin-top: 8px; }
+    #start {
+      font-size: 16px; padding: 10px 16px; cursor: pointer;
+      border: 1px solid #999; background: #f6f6f6; border-radius: 8px;
+    }
+    #start:disabled { opacity: 0.7; cursor: default; }
   </style>
 </head>
 <body>
   <h1>Shitty Volume</h1>
+  <button id="start">Start</button>
+
   <div class="row">
     <input id="vol" type="range" min="0" max="100" value="70" step="1" />
     <div id="tooltip" class="tooltip">70%</div>
   </div>
-  <div class="note">It changes after you let go. Sometimes.</div>
-
-  <audio id="bg" src="audio/loop.mp3" loop preload="auto" muted></audio>
+  <div class="note">Ticks down 1% per second. Updates are laggy and sometimes lie.</div>
+  
+  <!-- Using a remote audio URL; replace AUDIO_URL with your own link -->
+  <audio id="bg" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop preload="auto"></audio>
 
   <script>
     (function () {
       const audio = document.getElementById('bg');
       const slider = document.getElementById('vol');
       const tip = document.getElementById('tooltip');
-
-      // Try to autoplay; unmute on first interaction
-      (async () => {
-        try {
-          audio.volume = 0.5;
-          await audio.play();
-          window.addEventListener('pointerdown', () => (audio.muted = false), { once: true });
-        } catch {
-          window.addEventListener('pointerdown', () => {
-            audio.play().catch(() => {});
-            audio.muted = false;
-          }, { once: true });
-        }
-      })();
+      const start = document.getElementById('start');
 
       function shittyMap(val) {
         const x = val / 100;        // 0..1
-        let v = 1 - x;              // reverse direction
+        let v = x;                  // normal direction: 0% left -> 100% right
         if (x > 0.35 && x < 0.65) v = audio.volume;  // dead zone
         v = Math.pow(v, 0.35);      // nonlinear (too loud early)
         if (Math.random() < 0.15) v = v < 0.5 ? 1 : 0; // random snap
@@ -70,6 +65,44 @@
         const n = Number(slider.value);
         slider.value = Math.max(0, Math.min(100, n + (Math.random() * 20 - 10)));
         updateFakeTooltip(Number(slider.value));
+      });
+
+      // Tick down 1% every second after Start
+      let tickTimer = null;
+      function startTickDown() {
+        if (tickTimer) return;
+        tickTimer = setInterval(() => {
+          let n = Number(slider.value);
+          if (n <= 0) {
+            clearInterval(tickTimer);
+            tickTimer = null;
+            return;
+          }
+          n = n - 1;
+          slider.value = String(n);
+          // Reflect the change with the same laggy behavior
+          const v = Number(slider.value);
+          updateFakeTooltip(v);
+          clearTimeout(pending);
+          pending = setTimeout(() => {
+            audio.volume = shittyMap(v);
+          }, 250 + Math.random() * 400);
+        }, 1000);
+      }
+
+      // Start button: user gesture to play, then begin ticking
+      start.addEventListener('click', async () => {
+        start.disabled = true;
+        start.textContent = 'Starting...';
+        try {
+          audio.volume = shittyMap(Number(slider.value));
+          await audio.play();
+        } catch {
+          audio.play().catch(() => {});
+        }
+        audio.muted = false;
+        start.remove();
+        startTickDown();
       });
     })();
   </script>
