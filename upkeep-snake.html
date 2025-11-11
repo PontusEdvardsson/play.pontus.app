@@ -16,7 +16,7 @@
     .stage { position: relative; width: min(90vw, 960px); height: min(50vh, 360px); }
 
     /* Global nav buttons */
-    .nav { position: fixed; top: 16px; z-index: 10; font-size: 16px; padding: 12px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--btn-bg); color: var(--fg); text-decoration: none; }
+    .nav { position: fixed; top: 16px; z-index: 10; font-size: 16px; padding: 12px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--btn-bg); color: var(--fg); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; min-width: 88px; text-align: center; }
     .nav:hover { background: var(--btn-bg-hover); }
     .nav--next { right: 24px; }
     .nav--back { left: 24px; }
@@ -31,8 +31,8 @@
   </style>
 </head>
 <body>
-  <a class="nav nav--back" id="backNav" href="upkeep-pump.html" title="Back">&larr; Back</a>
-  <a class="nav nav--next" id="nextNav" href="index.html" title="Next">Next &rarr;</a>
+  <a class="nav nav--back" id="backNav" href="upkeep-pump.html" title="Back">Back</a>
+  <a class="nav nav--next" id="nextNav" href="index.html" title="Next">Next</a>
 
   <div class="wrap">
     <div class="panel">
