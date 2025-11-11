@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Shitty Volume Slider</title>
+  <title>Upkeep</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -42,11 +42,16 @@
       border-radius: 12px;
       padding: 24px 28px;
       box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
     }
 
-    h1 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }
+    h1 { margin: 0; font-size: 20px; font-weight: 600; text-align: center; }
 
-    .row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    .row { display: flex; align-items: center; justify-content: center; gap: 12px; }
 
     .tooltip { width: 48px; text-align: right; color: var(--muted); }
     .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
@@ -89,14 +94,14 @@
 <body>
   <div class="wrap">
     <div class="panel">
-      <h1>Shitty Volume</h1>
-      <button id="start" aria-label="Play" title="Play">▶</button>
+      <h1>Upkeep</h1>
+      <button id="start" aria-label="Play" title="Play">&#9654;</button>
 
       <div class="row">
         <input id="vol" type="range" min="0" max="100" value="70" step="1" />
         <div id="tooltip" class="tooltip">70%</div>
       </div>
-      <div class="note"></div>
+      
 
       <!-- Hidden audio; ensure rick.mp3 exists next to this file -->
       <audio id="rick" src="rick.mp3" preload="auto" loop></audio>
@@ -187,13 +192,13 @@
             await audio.play();
           } catch (err) {
             // If blocked, hint but keep button
-            start.textContent = '▶';
+            start.textContent = '\u25B6';
             start.title = 'Play';
             start.setAttribute('aria-label', 'Play');
             return;
           }
           isPlaying = true;
-          start.textContent = '⏸';
+          start.textContent = '\u23F8';
           start.title = 'Pause';
           start.setAttribute('aria-label', 'Pause');
           if (ctx && ctx.state === 'suspended') ctx.resume();
@@ -201,7 +206,7 @@
         } else {
           audio.pause();
           isPlaying = false;
-          start.textContent = '▶';
+          start.textContent = '\u25B6';
           start.title = 'Play';
           start.setAttribute('aria-label', 'Play');
           stopTickDown();
