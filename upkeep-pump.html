@@ -20,7 +20,7 @@
     html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
 
-    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; transform: translateY(-6vh); }
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
 
     .panel {
       position: relative;
@@ -61,7 +61,7 @@
       <a class="nav nav--back" href="index.html" title="Back">← Back</a>
       <a class="nav nav--next" href="index.html" title="Next">Next →</a>
       <div class="content">
-        <div id="title" class="percent">Pump</div>
+        <div id="percent" class="percent">50%</div>
         <button id="pump" aria-label="Pump" title="Pump +10%">Pump</button>
       </div>
 
@@ -71,7 +71,7 @@
 
   <script>
     (function(){
-      const titleEl = document.getElementById('title');
+      const percentEl = document.getElementById('percent');
       const pumpBtn = document.getElementById('pump');
       const audio = document.getElementById('rick');
 
@@ -107,7 +107,7 @@
       }
 
       function render(){
-        // Display stays as "Pump"; only update audio volume
+        percentEl.textContent = Math.round(level) + '%';
         audio.volume = mapVolume(level);
       }
       render();
