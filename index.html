@@ -130,7 +130,7 @@
         const params = new URLSearchParams(location.search);
         const cameFromParam = params.get('from');
         const cameFromStore = sessionStorage.getItem('cameFrom');
-        const shouldShowBack = cameFromParam === 'pump' || cameFromStore === 'pump';
+        const shouldShowBack = (cameFromParam === 'last' || cameFromStore === 'last' || cameFromParam === 'pump' || cameFromStore === 'pump');
         if (shouldShowBack && backNav) {
           backNav.style.display = '';
           // One-shot: clear the marker and clean the URL
