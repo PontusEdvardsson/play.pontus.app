@@ -140,15 +140,16 @@
         }
       });
 
-      function navigateToIndex(e){
+      function navHandler(e){
         e.preventDefault();
-        try { sessionStorage.setItem('cameFrom', 'pump'); } catch(_){}
-        const url = new URL(e.currentTarget.getAttribute('href'), location.href);
-        url.searchParams.set('from', 'pump');
-        location.href = url.toString();
+        if (e.currentTarget === nextNav) {
+          location.href = 'upkeep-snake.html';
+        } else {
+          location.href = 'index.html';
+        }
       }
-      backNav.addEventListener('click', navigateToIndex);
-      nextNav.addEventListener('click', navigateToIndex);
+      backNav.addEventListener('click', navHandler);
+      nextNav.addEventListener('click', navHandler);
 
       // Optional: keyboard support (Space / ArrowUp)
       window.addEventListener('keydown', (e) => {
