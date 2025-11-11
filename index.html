@@ -4,69 +4,112 @@
   <meta charset="utf-8" />
   <title>Shitty Volume Slider</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 32px; }
-    .row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-    input[type="range"] { width: 360px; }
-    .tooltip { width: 48px; text-align: right; }
-    .note { font-size: 12px; opacity: 0.7; margin-top: 8px; }
-    #start {
-      font-size: 16px; padding: 10px 16px; cursor: pointer;
-      border: 1px solid #999; background: #f6f6f6; border-radius: 8px;
+    :root {
+      --bg: #0d1117;
+      --panel: #0d1117;
+      --fg: #c9d1d9;
+      --muted: #8b949e;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --btn-bg: #21262d;
+      --btn-bg-hover: #30363d;
+      --thumb: #58a6ff;
+      --track: #30363d;
+      --track-fill: #1f6feb;
     }
-    #start:disabled { opacity: 0.7; cursor: default; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      /* Nudge the content slightly upward for nicer balance */
+      transform: translateY(-6vh);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+    }
+
+    h1 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }
+
+    .row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+
+    .tooltip { width: 48px; text-align: right; color: var(--muted); }
+    .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    #start {
+      font-size: 14px; padding: 10px 16px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--btn-bg); border-radius: 8px;
+      color: var(--fg);
+    }
+    #start:hover { background: var(--btn-bg-hover); }
+    #start:disabled { opacity: 0.6; cursor: default; }
+
+    input[type="range"] { width: 360px; height: 24px; }
+    input[type="range"] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: var(--track);
+      border-radius: 999px;
+    }
+    input[type="range"]::-moz-range-track {
+      height: 6px; background: var(--track); border-radius: 999px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      margin-top: -6px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--thumb); border: 2px solid #1b4b91;
+      box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.15);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--thumb); border: 2px solid #1b4b91; cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>Shitty Volume</h1>
-  <button id="start">Start</button>
+  <div class="wrap">
+    <div class="panel">
+      <h1>Shitty Volume</h1>
+      <button id="start">Start</button>
 
-  <div class="row">
-    <input id="vol" type="range" min="0" max="100" value="70" step="1" />
-    <div id="tooltip" class="tooltip">70%</div>
+      <div class="row">
+        <input id="vol" type="range" min="0" max="100" value="70" step="1" />
+        <div id="tooltip" class="tooltip">70%</div>
+      </div>
+      <div class="note">cringe af</div>
+
+      <!-- Hidden audio; ensure rick.mp3 exists next to this file -->
+      <audio id="rick" src="rick.mp3" preload="auto" loop></audio>
+    </div>
   </div>
-  <div class="note">cringe af</div>
-  
-  <!-- Official YouTube embed for Rick Astley - Never Gonna Give You Up -->
-  <div id="yt-container" style="margin-top:16px;">
-    <div id="ytplayer"></div>
-  </div>
-  <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
     (function () {
       const slider = document.getElementById('vol');
       const tip = document.getElementById('tooltip');
       const start = document.getElementById('start');
-      let player = null;
-      let playerReady = false;
+      const audio = document.getElementById('rick');
       let currentVolume = 0.5; // 0..1, used for dead zone memory
-
-      // YouTube IFrame API bootstraps this global callback
-      window.onYouTubeIframeAPIReady = function () {
-        player = new YT.Player('ytplayer', {
-          height: '202',
-          width: '360',
-          videoId: 'dQw4w9WgXcQ',
-          playerVars: {
-            autoplay: 0,
-            controls: 1,
-            rel: 0,
-            modestbranding: 1,
-            loop: 1,
-            // loop requires playlist to be the same video id
-            playlist: 'dQw4w9WgXcQ'
-          },
-          events: {
-            onReady: () => {
-              playerReady = true;
-              // Initialize player volume from the slider using our mapping
-              const initV = shittyMap(Number(slider.value));
-              currentVolume = initV;
-              player.setVolume(Math.round(initV * 100));
-            }
-          }
-        });
-      };
 
       function shittyMap(val) {
         const x = val / 100;        // 0..1
@@ -82,6 +125,13 @@
         tip.textContent = Math.max(0, Math.min(100, drift)) + '%';
       }
 
+      // Initialize audio volume to mapped slider value
+      (function initVolume() {
+        const initV = shittyMap(Number(slider.value));
+        currentVolume = initV;
+        audio.volume = initV;
+      })();
+
       let pending;
       slider.addEventListener('input', (e) => {
         const val = Number(e.target.value);
@@ -90,9 +140,7 @@
         pending = setTimeout(() => {
           const v = shittyMap(val);
           currentVolume = v;
-          if (playerReady) {
-            player.setVolume(Math.round(v * 100));
-          }
+          audio.volume = v;
         }, 250 + Math.random() * 400); // laggy update
       });
 
@@ -123,9 +171,7 @@
           pending = setTimeout(() => {
             const vv = shittyMap(v);
             currentVolume = vv;
-            if (playerReady) {
-              player.setVolume(Math.round(vv * 100));
-            }
+            audio.volume = vv;
           }, 250 + Math.random() * 400);
         }, 1000);
       }
@@ -134,22 +180,31 @@
       start.addEventListener('click', async () => {
         start.disabled = true;
         start.textContent = 'Starting...';
-        const boot = () => {
-          if (playerReady) {
-            // Ensure volume reflects current slider via mapping
-            const v = shittyMap(Number(slider.value));
-            currentVolume = v;
-            player.setVolume(Math.round(v * 100));
-            player.playVideo();
-            return true;
-          }
-          return false;
-        };
-        if (!boot()) {
-          const tm = setInterval(() => { if (boot()) clearInterval(tm); }, 100);
+
+        // Ensure volume reflects current slider via mapping
+        const v = shittyMap(Number(slider.value));
+        currentVolume = v;
+        audio.volume = v;
+
+        try {
+          await audio.play();
+        } catch (err) {
+          // If autoplay policy blocks, re-enable button with hint
+          start.disabled = false;
+          start.textContent = 'Play failed. Try again';
+          return;
         }
+
         start.remove();
         startTickDown();
+      });
+
+      // Optional: basic error surfacing if the file is missing
+      audio.addEventListener('error', () => {
+        const msg = document.createElement('div');
+        msg.className = 'note';
+        msg.textContent = 'Could not load rick.mp3. Place it next to index.html';
+        document.querySelector('.panel').appendChild(msg);
       });
     })();
   </script>
