@@ -58,8 +58,8 @@
 <body>
   <div class="wrap">
     <div class="panel">
-      <a class="nav nav--back" href="index.html" title="Back">← Back</a>
-      <a class="nav nav--next" href="index.html" title="Next">Next →</a>
+      <a class="nav nav--back" id="backNav" href="index.html" title="Back">← Back</a>
+      <a class="nav nav--next" id="nextNav" href="index.html" title="Next">Next →</a>
       <div class="content">
         <div id="percent" class="percent">50%</div>
         <button id="pump" aria-label="Pump" title="Pump +10%">Pump</button>
@@ -72,6 +72,8 @@
   <script>
     (function(){
       const percentEl = document.getElementById('percent');
+      const backNav = document.getElementById('backNav');
+      const nextNav = document.getElementById('nextNav');
       const pumpBtn = document.getElementById('pump');
       const audio = document.getElementById('rick');
 
@@ -137,6 +139,16 @@
           startTick();
         }
       });
+
+      function navigateToIndex(e){
+        e.preventDefault();
+        try { sessionStorage.setItem('cameFrom', 'pump'); } catch(_){}
+        const url = new URL(e.currentTarget.getAttribute('href'), location.href);
+        url.searchParams.set('from', 'pump');
+        location.href = url.toString();
+      }
+      backNav.addEventListener('click', navigateToIndex);
+      nextNav.addEventListener('click', navigateToIndex);
 
       // Optional: keyboard support (Space / ArrowUp)
       window.addEventListener('keydown', (e) => {
