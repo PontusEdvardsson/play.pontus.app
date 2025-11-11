@@ -33,13 +33,15 @@
       min-width: 520px; min-height: 200px;
     }
 
-    .next, .back {
-      position: absolute; top: 10px; font-size: 13px; padding: 6px 10px; border-radius: 6px;
+    /* Global nav buttons */
+    .nav {
+      position: fixed; top: 16px; z-index: 10;
+      font-size: 16px; padding: 12px 20px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--btn-bg); color: var(--fg); text-decoration: none;
     }
-    .next { right: 12px; }
-    .back { left: 12px; }
-    .next:hover, .back:hover { background: var(--btn-bg-hover); }
+    .nav:hover { background: var(--btn-bg-hover); }
+    .nav--next { right: 24px; }
+    .nav--back { left: 24px; }
 
     .content { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px; }
     .percent { font-size: 64px; font-weight: 700; text-align: center; letter-spacing: 1px; }
@@ -56,11 +58,11 @@
 <body>
   <div class="wrap">
     <div class="panel">
-      <a class="back" href="index.html" title="Back">← Back</a>
-      <a class="next" href="#" title="Next" style="pointer-events:none; opacity:0.5;">Next →</a>
+      <a class="nav nav--back" href="index.html" title="Back">← Back</a>
+      <a class="nav nav--next" href="index.html" title="Next">Next →</a>
       <div class="content">
-        <div id="percent" class="percent">50%</div>
-        <button id="pump" aria-label="Pump" title="Pump +10%">Pump +10%</button>
+        <div id="title" class="percent">Pump</div>
+        <button id="pump" aria-label="Pump" title="Pump +10%">Pump</button>
       </div>
 
       <audio id="rick" src="rick.mp3" preload="auto" loop></audio>
@@ -69,7 +71,7 @@
 
   <script>
     (function(){
-      const percentEl = document.getElementById('percent');
+      const titleEl = document.getElementById('title');
       const pumpBtn = document.getElementById('pump');
       const audio = document.getElementById('rick');
 
@@ -105,7 +107,7 @@
       }
 
       function render(){
-        percentEl.textContent = Math.round(level) + '%';
+        // Display stays as "Pump"; only update audio volume
         audio.volume = mapVolume(level);
       }
       render();
@@ -155,4 +157,3 @@
   </script>
 </body>
 </html>
-
