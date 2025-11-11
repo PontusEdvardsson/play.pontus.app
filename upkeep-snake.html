@@ -108,14 +108,18 @@
         audio.volume = mapVolume(level);
         tip.textContent = level + '%';
       }
-      svg.addEventListener('pointerdown', (e)=>{
-        if (trySetLevelFromPointer(e)) {
-          dragging = true;
-          try{ svg.setPointerCapture(e.pointerId); }catch(_){}
-        }
+      // Only start dragging by grabbing the knob
+      knob.style.cursor = 'grab';
+      knob.addEventListener('pointerdown', (e)=>{
+        dragging = true;
+        knob.style.cursor = 'grabbing';
+        try{ svg.setPointerCapture(e.pointerId); }catch(_){ }
+        e.stopPropagation();
       });
+      // Ignore clicks on the track so the knob doesn't jump
+      svg.addEventListener('pointerdown', (e)=>{ /* no-op */ });
       svg.addEventListener('pointermove', (e)=>{ if(dragging) trySetLevelFromPointer(e); });
-      svg.addEventListener('pointerup',   (e)=>{ dragging = false; try{ svg.releasePointerCapture(e.pointerId); }catch(_){}});
+      svg.addEventListener('pointerup',   (e)=>{ dragging = false; knob.style.cursor = 'grab'; try{ svg.releasePointerCapture(e.pointerId); }catch(_){}});
 
       // Audio normalization curve
       function mapVolume(val){
