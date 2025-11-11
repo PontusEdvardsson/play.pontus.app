@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Upkeep — Pump</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #0d1117;
+      --fg: #c9d1d9;
+      --muted: #8b949e;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --btn-bg: #21262d;
+      --btn-bg-hover: #30363d;
+      --thumb: #58a6ff;
+      --track: #30363d;
+    }
+
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; transform: translateY(-6vh); }
+
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+      display: flex; align-items: center; justify-content: center;
+      min-width: 520px; min-height: 200px;
+    }
+
+    .next, .back {
+      position: absolute; top: 10px; font-size: 13px; padding: 6px 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--btn-bg); color: var(--fg); text-decoration: none;
+    }
+    .next { right: 12px; }
+    .back { left: 12px; }
+    .next:hover, .back:hover { background: var(--btn-bg-hover); }
+
+    .content { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px; }
+    .percent { font-size: 64px; font-weight: 700; text-align: center; letter-spacing: 1px; }
+
+    #pump {
+      font-size: 16px; padding: 12px 14px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--btn-bg); border-radius: 8px; color: var(--fg);
+      min-width: 68px;
+    }
+    #pump:hover { background: var(--btn-bg-hover); }
+    #pump:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <a class="back" href="index.html" title="Back">← Back</a>
+      <a class="next" href="#" title="Next" style="pointer-events:none; opacity:0.5;">Next →</a>
+      <div class="content">
+        <div id="percent" class="percent">50%</div>
+        <button id="pump" aria-label="Pump" title="Pump +10%">Pump +10%</button>
+      </div>
+
+      <audio id="rick" src="rick.mp3" preload="auto" loop></audio>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const percentEl = document.getElementById('percent');
+      const pumpBtn = document.getElementById('pump');
+      const audio = document.getElementById('rick');
+
+      // Level in 0..100
+      let level = 50;
+      let isPlaying = false;
+      let tickTimer = null;
+
+      // Optional loudness normalization via DynamicsCompressor
+      let ctx, sourceNode, compressor;
+      function setupAudioGraph(){
+        if (ctx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        ctx = new AC();
+        sourceNode = ctx.createMediaElementSource(audio);
+        compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 12;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+        sourceNode.connect(compressor);
+        compressor.connect(ctx.destination);
+      }
+
+      function mapVolume(val){
+        const x = Math.max(0, Math.min(1, val/100));
+        const gamma = 2.2;
+        const cap = 0.75;
+        const v = Math.pow(x, gamma);
+        return Math.max(0, Math.min(cap, v));
+      }
+
+      function render(){
+        percentEl.textContent = Math.round(level) + '%';
+        audio.volume = mapVolume(level);
+      }
+      render();
+
+      function startTick(){
+        if (tickTimer) return;
+        tickTimer = setInterval(() => {
+          if (level > 0) {
+            level = Math.max(0, level - 5);
+            render();
+          }
+        }, 1000);
+      }
+      function stopTick(){
+        if (!tickTimer) return; clearInterval(tickTimer); tickTimer = null;
+      }
+
+      pumpBtn.addEventListener('click', async () => {
+        level = Math.min(100, level + 10);
+        render();
+
+        if (!isPlaying) {
+          setupAudioGraph();
+          try { await audio.play(); } catch (_) { /* ignore */ }
+          if (ctx && ctx.state === 'suspended') ctx.resume();
+          isPlaying = true;
+          startTick();
+        }
+      });
+
+      // Optional: keyboard support (Space / ArrowUp)
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+          e.preventDefault(); pumpBtn.click();
+        }
+      });
+
+      // If the audio errors (e.g., file missing), show a hint
+      audio.addEventListener('error', () => {
+        const hint = document.createElement('div');
+        hint.style.marginTop = '10px';
+        hint.style.color = '#8b949e';
+        hint.textContent = 'Could not load rick.mp3. Place it next to this file.';
+        document.querySelector('.panel').appendChild(hint);
+      });
+    })();
+  </script>
+</body>
+</html>
+
