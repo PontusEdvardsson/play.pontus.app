@@ -102,10 +102,7 @@
     .nav:hover { background: var(--btn-bg-hover); }
     .nav--next { right: 24px; }
     .nav--back { left: 24px; }
-    /* Replace any inline arrows/text with clean labels */
-    .nav--next, .nav--back { color: transparent; }
-    .nav--next::before { content: 'Next'; color: var(--fg); }
-    .nav--back::before { content: 'Back'; color: var(--fg); }
+    /* No pseudo labels; text is centered via inline-flex */
   </style>
 </head>
 <body>
@@ -129,7 +126,12 @@
 
   <script>
     (function () {
-      // Show Back only if arriving from the last page (pump)
+      // Normalize nav button labels and center text
+      const nextNavEls = document.querySelectorAll('.nav--next');
+      nextNavEls.forEach(el => { el.textContent = 'Next'; });
+      const backEl = document.getElementById('backNav');
+      if (backEl) backEl.textContent = 'Back';
+      // Show Back only if arriving from the last page
       const backNav = document.getElementById('backNav');
       try {
         const params = new URLSearchParams(location.search);

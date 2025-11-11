@@ -43,9 +43,6 @@
     .nav:hover { background: var(--btn-bg-hover); }
     .nav--next { right: 24px; }
     .nav--back { left: 24px; }
-    .nav--next, .nav--back { color: transparent; }
-    .nav--next::before { content: 'Next'; color: var(--fg); }
-    .nav--back::before { content: 'Back'; color: var(--fg); }
 
     .content { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px; }
     .percent { font-size: 64px; font-weight: 700; text-align: center; letter-spacing: 1px; }
@@ -78,6 +75,9 @@
       const percentEl = document.getElementById('percent');
       const backNav = document.getElementById('backNav');
       const nextNav = document.getElementById('nextNav');
+      // Normalize nav button labels
+      if (backNav) backNav.textContent = 'Back';
+      if (nextNav) nextNav.textContent = 'Next';
       const pumpBtn = document.getElementById('pump');
       const audio = document.getElementById('rick');
 
