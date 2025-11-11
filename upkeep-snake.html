@@ -78,10 +78,11 @@
       // Draggable knob following the snake track
       let level = 0; // 0..100
       let dragging = false;
+      let dragOffsetPx = 0; // pointer X minus knob center X in local px
       function clamp(v,min,max){ return v < min ? min : v > max ? max : v; }
-      function trySetLevelFromPointer(e){
+      function trySetLevelFromPointer(e, useOffset){
         const bbox = svg.getBoundingClientRect();
-        const localX = clamp(e.clientX - bbox.left, 0, bbox.width);
+        const localX = clamp(e.clientX - bbox.left - (useOffset ? dragOffsetPx : 0), 0, bbox.width);
         const localY = clamp(e.clientY - bbox.top, 0, bbox.height);
         const p = localX / bbox.width; // 0..1
         const xV = left + (right - left) * p; // viewBox X
@@ -111,6 +112,10 @@
       // Only start dragging by grabbing the knob
       knob.style.cursor = 'grab';
       knob.addEventListener('pointerdown', (e)=>{
+        const bbox = svg.getBoundingClientRect();
+        const localX = clamp(e.clientX - bbox.left, 0, bbox.width);
+        const knobLocalX = (level/100) * bbox.width;
+        dragOffsetPx = localX - knobLocalX;
         dragging = true;
         knob.style.cursor = 'grabbing';
         try{ svg.setPointerCapture(e.pointerId); }catch(_){ }
@@ -118,7 +123,7 @@
       });
       // Ignore clicks on the track so the knob doesn't jump
       svg.addEventListener('pointerdown', (e)=>{ /* no-op */ });
-      svg.addEventListener('pointermove', (e)=>{ if(dragging) trySetLevelFromPointer(e); });
+      svg.addEventListener('pointermove', (e)=>{ if(dragging) trySetLevelFromPointer(e, true); });
       svg.addEventListener('pointerup',   (e)=>{ dragging = false; knob.style.cursor = 'grab'; try{ svg.releasePointerCapture(e.pointerId); }catch(_){}});
 
       // Audio normalization curve
