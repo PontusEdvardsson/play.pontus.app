@@ -32,7 +32,7 @@
 </head>
 <body>
   <a class="nav nav--back" id="backNav" href="upkeep-pump.html" title="Back">Back</a>
-  <a class="nav nav--next" id="nextNav" href="index.html" title="Next">Next</a>
+  <a class="nav nav--next" id="nextNav" href="upkeep-catch.html" title="Next">Next</a>
 
   <div class="wrap">
     <div class="panel">
@@ -160,15 +160,11 @@
       // Initialize
       render();
 
-      // Carousel: when leaving to index (Next), mark that we came from the last page
-      function gotoIndexMarkLast(e){
+      // Next simply moves forward in the carousel to the catch game
+      nextNav.addEventListener('click', (e)=>{
         e.preventDefault();
-        try{ sessionStorage.setItem('cameFrom','last'); }catch(_){ }
-        const url = new URL(nextNav.getAttribute('href'), location.href);
-        url.searchParams.set('from','last');
-        location.href = url.toString();
-      }
-      nextNav.addEventListener('click', gotoIndexMarkLast);
+        location.href = 'upkeep-catch.html';
+      });
     })();
   </script>
 </body>

@@ -1,0 +1,245 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Upkeep - Catch</title>
+  <style>
+    :root {
+      --bg: #0d1117; --panel: #0d1117; --fg: #c9d1d9; --muted: #8b949e;
+      --border: #30363d; --btn-bg: #21262d; --btn-bg-hover: #30363d;
+      --accent: #58a6ff; --danger: #f85149;
+    }
+
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+
+    .panel { position: relative; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+      display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+    .stage { position: relative; width: min(90vw, 960px); height: min(55vh, 380px);
+      border-radius: 12px; border: 1px solid var(--border); overflow: hidden;
+      background: radial-gradient(circle at 50% 0%, rgba(88,166,255,0.1), transparent 60%);
+    }
+
+    /* Global nav buttons */
+    .nav { position: fixed; top: 16px; z-index: 10; font-size: 16px; padding: 12px 20px;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--btn-bg);
+      color: var(--fg); text-decoration: none; display: inline-flex; align-items: center;
+      justify-content: center; min-width: 88px; text-align: center; }
+    .nav:hover { background: var(--btn-bg-hover); }
+    .nav--next { right: 24px; }
+    .nav--back { left: 24px; }
+
+    #play { font-size: 18px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--btn-bg); color: var(--fg); cursor: pointer; }
+    #play:hover { background: var(--btn-bg-hover); }
+
+    #volumeLabel { font-size: 24px; font-weight: 600; color: var(--fg); }
+
+    #paddle { position: absolute; bottom: 18px; width: 120px; height: 10px; border-radius: 999px;
+      background: var(--accent); box-shadow: 0 0 12px rgba(88,166,255,0.4); }
+
+    .block { position: absolute; width: 40px; height: 40px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; }
+    .block.plus { background: rgba(88,166,255,0.25); border: 1px solid var(--accent); color: var(--fg); }
+    .block.minus { background: rgba(248,81,73,0.18); border: 1px solid var(--danger); color: var(--danger); }
+  </style>
+</head>
+<body>
+  <a class="nav nav--back" href="upkeep-snake.html" title="Back">Back</a>
+  <a class="nav nav--next" id="nextNav" href="index.html" title="Next">Next</a>
+
+  <div class="wrap">
+    <div class="panel">
+      <button id="play" aria-label="Play" title="Play">Play</button>
+      <div id="volumeLabel">50%</div>
+      <div id="stage" class="stage">
+        <div id="paddle"></div>
+      </div>
+      <audio id="rick" src="rick.mp3" preload="auto" loop></audio>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const stage = document.getElementById('stage');
+      const paddleEl = document.getElementById('paddle');
+      const audio = document.getElementById('rick');
+      const playBtn = document.getElementById('play');
+      const nextNav = document.getElementById('nextNav');
+      const volumeLabel = document.getElementById('volumeLabel');
+
+      let stageRect = stage.getBoundingClientRect();
+      let level = 50; // 0..100
+      let paddleX = 0;
+      const paddleWidth = 120;
+      const paddleHeight = 10;
+      const paddleBottom = 18;
+
+      const blocks = [];
+      let spawnTimer = 0;
+      let lastTime = null;
+      let running = true;
+      let isPlaying = false;
+
+      // Audio normalization curve (reuse from other pages)
+      function mapVolume(val){
+        const x = Math.max(0, Math.min(1, val/100));
+        const gamma = 2.2; const cap = 0.75; const v = Math.pow(x, gamma);
+        return Math.max(0, Math.min(cap, v));
+      }
+
+      function clamp(v,min,max){ return v < min ? min : v > max ? max : v; }
+
+      function updateVolume(){
+        volumeLabel.textContent = Math.round(level) + '%';
+        audio.volume = mapVolume(level);
+      }
+      updateVolume();
+
+      // Optional compressor
+      let ctx, sourceNode, compressor;
+      function setupAudioGraph(){
+        if (ctx) return;
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        ctx = new AC();
+        sourceNode = ctx.createMediaElementSource(audio);
+        compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.value = -24; compressor.knee.value = 30; compressor.ratio.value = 12; compressor.attack.value = 0.003; compressor.release.value = 0.25;
+        sourceNode.connect(compressor); compressor.connect(ctx.destination);
+      }
+
+      async function ensureAudioPlaying(){
+        if (isPlaying) return;
+        setupAudioGraph();
+        try {
+          await audio.play();
+        } catch (_) {
+          return;
+        }
+        isPlaying = true;
+      }
+
+      playBtn.addEventListener('click', async ()=>{
+        if (!isPlaying) {
+          await ensureAudioPlaying();
+          if (isPlaying) playBtn.textContent = 'Pause';
+        } else {
+          audio.pause();
+          isPlaying = false;
+          playBtn.textContent = 'Play';
+        }
+      });
+
+      function layout(){
+        stageRect = stage.getBoundingClientRect();
+        paddleX = (stageRect.width - paddleWidth)/2;
+        renderPaddle();
+      }
+
+      function renderPaddle(){
+        paddleEl.style.width = paddleWidth + 'px';
+        paddleEl.style.height = paddleHeight + 'px';
+        paddleEl.style.transform = `translate(${paddleX}px, 0)`;
+      }
+
+      function spawnBlock(){
+        const values = [5,10,15,20,-5,-10,-15,-20];
+        const value = values[Math.floor(Math.random()*values.length)];
+        const size = 40;
+        const x = Math.random() * (stageRect.width - size);
+        const y = -size;
+        const speed = 80 + Math.random()*120; // px per second
+
+        const el = document.createElement('div');
+        el.className = 'block ' + (value > 0 ? 'plus' : 'minus');
+        el.textContent = (value>0? '+' : '') + value + '%';
+        stage.appendChild(el);
+
+        blocks.push({ x, y, size, speed, value, el });
+      }
+
+      function update(dt){
+        // Spawn blocks
+        spawnTimer -= dt;
+        if (spawnTimer <= 0){
+          spawnBlock();
+          spawnTimer = 0.8 + Math.random()*0.9; // seconds
+        }
+
+        const paddleY = stageRect.height - paddleBottom - paddleHeight;
+        const remove = [];
+
+        for (let i=0;i<blocks.length;i++){
+          const b = blocks[i];
+          b.y += b.speed * dt;
+
+          // collision with paddle
+          const hitY = (b.y + b.size) >= paddleY && b.y <= paddleY + paddleHeight;
+          const hitX = (b.x + b.size) >= paddleX && b.x <= paddleX + paddleWidth;
+          if (hitY && hitX){
+            level = clamp(level + b.value, 0, 100);
+            updateVolume();
+            stage.removeChild(b.el);
+            remove.push(i);
+            continue;
+          }
+
+          // fell out of stage
+          if (b.y > stageRect.height + 60){
+            stage.removeChild(b.el);
+            remove.push(i);
+          } else {
+            b.el.style.transform = `translate(${b.x}px, ${b.y}px)`;
+          }
+        }
+
+        // Remove caught/off-screen blocks from array (from end to start)
+        for (let i = remove.length - 1; i >= 0; i--){
+          blocks.splice(remove[i], 1);
+        }
+      }
+
+      function loop(timestamp){
+        if (!running) return;
+        if (lastTime == null) lastTime = timestamp;
+        const dt = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+        update(dt);
+        requestAnimationFrame(loop);
+      }
+
+      // Paddle control via pointer
+      stage.addEventListener('pointermove', (e)=>{
+        const rect = stageRect;
+        const localX = clamp(e.clientX - rect.left, 0, rect.width);
+        paddleX = clamp(localX - paddleWidth/2, 0, rect.width - paddleWidth);
+        renderPaddle();
+      });
+
+      stage.addEventListener('pointerdown', ()=>{ ensureAudioPlaying(); });
+
+      window.addEventListener('resize', ()=>{
+        layout();
+      });
+
+      // Carousel: mark index as coming from last when leaving via Next
+      nextNav.addEventListener('click', (e)=>{
+        e.preventDefault();
+        try{ sessionStorage.setItem('cameFrom','last'); }catch(_){ }
+        const url = new URL(nextNav.getAttribute('href'), location.href);
+        url.searchParams.set('from','last');
+        location.href = url.toString();
+      });
+
+      layout();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
+
