@@ -103,6 +103,24 @@
     .nav--next { right: 24px; }
     .nav--back { left: 24px; }
     /* No pseudo labels; text is centered via inline-flex */
+
+    @media (max-width: 600px) {
+      .wrap {
+        padding: 16px;
+        transform: none;
+      }
+      .panel {
+        width: 100%;
+        max-width: 480px;
+        padding: 20px 16px;
+      }
+      .row {
+        width: 100%;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>

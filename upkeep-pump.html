@@ -54,6 +54,30 @@
     }
     #pump:hover { background: var(--btn-bg-hover); }
     #pump:active { transform: translateY(1px); }
+
+    @media (max-width: 600px) {
+      .wrap {
+        padding: 16px;
+      }
+      .panel {
+        width: 100%;
+        max-width: 480px;
+        min-width: 0;
+        padding: 20px 16px;
+      }
+      .content {
+        grid-template-columns: 1fr;
+        row-gap: 16px;
+      }
+      .percent {
+        font-size: 48px;
+      }
+      #pump {
+        width: 100%;
+        max-width: 220px;
+        justify-self: center;
+      }
+    }
   </style>
 </head>
 <body>
