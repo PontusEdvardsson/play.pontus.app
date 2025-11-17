@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Upkeep - Catch</title>
   <style>
     :root {
@@ -19,9 +20,10 @@
       border-radius: 12px; padding: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
       display: flex; flex-direction: column; align-items: center; gap: 16px; }
 
-    .stage { position: relative; width: min(90vw, 960px); height: min(55vh, 380px);
+    .stage { position: relative; width: 100%; max-width: 960px; height: clamp(260px, 60vh, 420px);
       border-radius: 12px; border: 1px solid var(--border); overflow: hidden;
       background: radial-gradient(circle at 50% 0%, rgba(88,166,255,0.1), transparent 60%);
+      touch-action: none;
     }
 
     /* Global nav buttons 1*/
@@ -47,6 +49,14 @@
       font-size: 14px; font-weight: 600; }
     .block.plus { background: rgba(88,166,255,0.25); border: 1px solid var(--accent); color: var(--fg); }
     .block.minus { background: rgba(248,81,73,0.18); border: 1px solid var(--danger); color: var(--danger); }
+
+    @media (max-width: 600px) {
+      .wrap { padding: 16px; }
+      .panel { padding: 16px; }
+      #volumeLabel { font-size: 20px; }
+      #paddle { width: 40vw; height: 14px; bottom: 12px; }
+      .block { width: 48px; height: 48px; font-size: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -242,4 +252,3 @@
   </script>
 </body>
 </html>
-
